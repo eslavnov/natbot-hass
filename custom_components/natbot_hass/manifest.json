@@ -1,0 +1,11 @@
+{
+  "domain": "natbot_hass",
+  "name": "Natbot",
+  "codeowners": ["@eslavnov"],
+  "config_flow": true,
+  "documentation": "https://github.com/eslavnov/natbot-hass",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "requirements": ["python-telegram-bot==21.11.1"],
+  "version": "0.1.0"
+}

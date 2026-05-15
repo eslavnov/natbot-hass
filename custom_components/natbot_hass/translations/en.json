@@ -1,0 +1,111 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Telegram Media Bot",
+        "description": "Enter your Telegram bot and OMDb settings.",
+        "data": {
+          "bot_token": "Telegram bot token",
+          "omdb_api_key": "OMDb API key",
+          "allowed_chat_ids": "Allowed chat IDs",
+          "search_mode": "Search mode",
+          "search_command": "Search command"
+        }
+      },
+      "radarr_connection": {
+        "title": "Radarr",
+        "description": "Enter Radarr connection details. Leave empty to skip movie support.",
+        "data": {
+          "radarr_url": "Radarr URL",
+          "radarr_api_key": "Radarr API key"
+        }
+      },
+      "radarr_options": {
+        "title": "Radarr options",
+        "description": "Choose the Radarr quality profile and root folder.",
+        "data": {
+          "radarr_quality_profile_id": "Radarr quality profile",
+          "radarr_root_folder": "Radarr root folder"
+        }
+      },
+      "sonarr_connection": {
+        "title": "Sonarr",
+        "description": "Enter Sonarr connection details. Leave empty to skip TV support.",
+        "data": {
+          "sonarr_url": "Sonarr URL",
+          "sonarr_api_key": "Sonarr API key"
+        }
+      },
+      "sonarr_options": {
+        "title": "Sonarr options",
+        "description": "Choose the Sonarr quality profile and root folder.",
+        "data": {
+          "sonarr_quality_profile_id": "Sonarr quality profile",
+          "sonarr_root_folder": "Sonarr root folder"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect. Check the URL and API key.",
+      "no_quality_profiles": "No quality profiles found.",
+      "no_root_folders": "No root folders found.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "Telegram Media Bot is already configured."
+    }
+  },
+    "options": {
+    "step": {
+      "init": {
+        "title": "Telegram Media Bot options",
+        "description": "Update Telegram, OMDb, and search mode settings.",
+        "data": {
+          "bot_token": "Telegram bot token",
+          "omdb_api_key": "OMDb API key",
+          "allowed_chat_ids": "Allowed chat IDs",
+          "search_mode": "Search mode",
+          "search_command": "Search command"
+        }
+      },
+      "radarr_connection": {
+        "title": "Radarr",
+        "description": "Update Radarr connection details. Leave empty to disable movie support.",
+        "data": {
+          "radarr_url": "Radarr URL",
+          "radarr_api_key": "Radarr API key"
+        }
+      },
+      "radarr_options": {
+        "title": "Radarr options",
+        "description": "Choose the Radarr quality profile and root folder.",
+        "data": {
+          "radarr_quality_profile_id": "Radarr quality profile",
+          "radarr_root_folder": "Radarr root folder"
+        }
+      },
+      "sonarr_connection": {
+        "title": "Sonarr",
+        "description": "Update Sonarr connection details. Leave empty to disable TV support.",
+        "data": {
+          "sonarr_url": "Sonarr URL",
+          "sonarr_api_key": "Sonarr API key"
+        }
+      },
+      "sonarr_options": {
+        "title": "Sonarr options",
+        "description": "Choose the Sonarr quality profile and root folder.",
+        "data": {
+          "sonarr_quality_profile_id": "Sonarr quality profile",
+          "sonarr_root_folder": "Sonarr root folder"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect. Check the URL and API key.",
+      "no_quality_profiles": "No quality profiles found.",
+      "no_root_folders": "No root folders found.",
+      "unknown": "Unexpected error."
+    }
+  }
+}

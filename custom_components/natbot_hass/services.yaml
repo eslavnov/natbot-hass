@@ -1,0 +1,29 @@
+send_message:
+  name: Send message
+  description: Send a Telegram message.
+  fields:
+    chat_id:
+      name: Chat ID
+      required: true
+      selector:
+        text:
+    message:
+      name: Message
+      required: true
+      selector:
+        text:
+
+ask_movie:
+  name: Ask movie
+  description: Send a movie result prompt with buttons.
+  fields:
+    chat_id:
+      name: Chat ID
+      required: true
+      selector:
+        text:
+    title:
+      name: Movie or TV title
+      required: true
+      selector:
+        text:

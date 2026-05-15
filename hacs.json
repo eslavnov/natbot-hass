@@ -1,0 +1,6 @@
+{
+  "name": "Natbot",
+  "render_readme": true,
+  "domains": ["natbot_hass"],
+  "homeassistant": "2025.1.0"
+}
