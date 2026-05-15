@@ -1,4 +1,4 @@
-DOMAIN = "telegram_media_bot"
+DOMAIN = "natbot_hass"
 
 CONF_BOT_TOKEN = "bot_token"
 CONF_ALLOWED_CHAT_IDS = "allowed_chat_ids"
