@@ -430,7 +430,7 @@ class TelegramMediaBot:
                 _LOGGER.exception("Failed to add/update Sonarr series: %s", err)
 
                 await query.edit_message_text(
-                    f"? Failed to update Sonarr\n\n"
+                    f"❌ Failed to update Sonarr\n\n"
                     f"{escape(str(err))}",
                     parse_mode="HTML",
                 )
@@ -439,7 +439,7 @@ class TelegramMediaBot:
                 _LOGGER.exception("Unexpected season selection error: %s", err)
 
                 await query.edit_message_text(
-                    f"? Unexpected error while updating Sonarr\n\n"
+                    f"❌ Unexpected error while updating Sonarr\n\n"
                     f"{escape(str(err))}",
                     parse_mode="HTML",
                 )
@@ -842,7 +842,7 @@ class TelegramMediaBot:
             _LOGGER.exception("Failed to add media to Arr: %s", err)
 
             await query.edit_message_text(
-                f"? Failed to add\n"
+                f"❌ Failed to add\n"
                 f"<b>{escape(str(title))} ({escape(str(year))})</b>\n\n"
                 f"{escape(str(err))}",
                 parse_mode="HTML",
@@ -892,7 +892,7 @@ class TelegramMediaBot:
         added_year = added.get("year", year)
 
         await query.edit_message_text(
-            f"? Added to Radarr\n"
+            f"✅ Added to Radarr\n"
             f'<a href="{escape(str(imdb_url))}"><b>{escape(str(added_title))} ({escape(str(added_year))})</b>\n</a>',
             parse_mode="HTML",
         )
@@ -946,7 +946,7 @@ class TelegramMediaBot:
                 seasons_text = season_label
 
             await query.edit_message_text(
-                f"? Updated existing Sonarr show\n"
+                f"✅ Updated existing Sonarr show\n"
                 f'<a href="{escape(str(imdb_url))}"><b>{escape(str(added_title))} ({escape(str(added_year))})</b>\n</a>'
                 f"Seasons: {escape(str(seasons_text))}\n",
                 parse_mode="HTML",
@@ -954,7 +954,7 @@ class TelegramMediaBot:
             return
 
         await query.edit_message_text(
-            f"? Added to Sonarr\n"
+            f"✅ Added to Sonarr\n"
             f'<a href="{escape(str(imdb_url))}"><b>{escape(str(added_title))} ({escape(str(added_year))})</b>\n</a>'
             f"Seasons: {escape(str(season_label))}\n",
             parse_mode="HTML",
