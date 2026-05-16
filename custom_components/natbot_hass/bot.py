@@ -33,7 +33,6 @@ _LOGGER = logging.getLogger(__name__)
 
 OMDB_PAGE_SIZE = 10
 
-
 def _build_application(token: str) -> Application:
     """Build Telegram application outside Home Assistant's event loop."""
     return ApplicationBuilder().token(token).build()
@@ -99,7 +98,7 @@ class TelegramMediaBot:
         """Start the Telegram bot."""
 
         if self.application is not None:
-            _LOGGER.warning("Telegram Media Bot is already started")
+            _LOGGER.warning("Natbot is already started")
             return
 
         self.status = "starting"
@@ -129,7 +128,7 @@ class TelegramMediaBot:
         await self.application.updater.start_polling()
 
         self.status = "running"
-        _LOGGER.warning("Telegram Media Bot started")
+        _LOGGER.warning("Natbot started")
 
     async def async_stop(self) -> None:
         """Stop the Telegram bot cleanly."""
@@ -151,7 +150,7 @@ class TelegramMediaBot:
             self.application = None
             self.status = "stopped"
 
-        _LOGGER.warning("Telegram Media Bot stopped")
+        _LOGGER.warning("Natbot stopped")
 
     def _is_allowed(self, chat_id: int) -> bool:
         if not self.allowed_chat_ids:
@@ -207,8 +206,7 @@ class TelegramMediaBot:
             )
         else:
             message = (
-                "Send a movie or TV show name. "
-                "I will search OMDb and return Prev / Next / Download options."
+                "Send a movie or TV show name."
             )
 
         await update.message.reply_text(
@@ -432,7 +430,7 @@ class TelegramMediaBot:
                 _LOGGER.exception("Failed to add/update Sonarr series: %s", err)
 
                 await query.edit_message_text(
-                    f"❌ Failed to update Sonarr\n\n"
+                    f"? Failed to update Sonarr\n\n"
                     f"{escape(str(err))}",
                     parse_mode="HTML",
                 )
@@ -441,7 +439,7 @@ class TelegramMediaBot:
                 _LOGGER.exception("Unexpected season selection error: %s", err)
 
                 await query.edit_message_text(
-                    f"❌ Unexpected error while updating Sonarr\n\n"
+                    f"? Unexpected error while updating Sonarr\n\n"
                     f"{escape(str(err))}",
                     parse_mode="HTML",
                 )
@@ -471,8 +469,6 @@ class TelegramMediaBot:
         search_query = str(session.get("query", "")).strip()
         current_page = int(session.get("page", 1))
         next_page = current_page + 1
-
-        # await query.answer("Loading more results...")
 
         search_result = await self.async_search_movies_page(
             search_query,
@@ -720,7 +716,6 @@ class TelegramMediaBot:
         results = session.get("results", [])
         index = int(session.get("index", 0))
         total_results = int(session.get("total_results", len(results)))
-        # has_more = bool(session.get("has_more", False))
 
         if not results:
             return (
@@ -760,33 +755,10 @@ class TelegramMediaBot:
 
         loaded_count = len(results)
 
-        # text = (
-        #     f"{index + 1}/{total_results} "
-        #     # f"{escape(str(imdb_url))}\n"
-        #     # f"<b>{escape(str(title))} ({escape(str(year))})</b> {escape(str(imdb_url))}\n"
-        #     # f"Type: {escape(str(media_type))}\n"
-        # )
-        # text = (
-        #     f"{index + 1}/{total_results} "
-        #     # f"(loaded {loaded_count})\n"
-        #     f"{title} ({year})\n"
-        #     # f"Type: {media_type}\n"
-        # )
-
-        # if genre and genre != "N/A":
-        #     text += f"Genre: {genre}\n"
-
-        # if runtime and runtime != "N/A":
-        #     text += f"Runtime: {runtime}\n"
-
-        # if rating and rating != "N/A":
-        #     text += f"IMDb rating: {rating}\n"
-
         if plot and plot != "N/A":
             text = f'\n<a href="{escape(str(imdb_url))}">{escape(str(plot))}</a>'
         else:
             text = f'\n<a href="{escape(str(imdb_url))}">{escape(str(title))}</a>'
-        # text += f"\n{escape(str(imdb_url))}"
 
         keyboard_rows = [
             [
@@ -870,7 +842,7 @@ class TelegramMediaBot:
             _LOGGER.exception("Failed to add media to Arr: %s", err)
 
             await query.edit_message_text(
-                f"❌ Failed to add\n"
+                f"? Failed to add\n"
                 f"<b>{escape(str(title))} ({escape(str(year))})</b>\n\n"
                 f"{escape(str(err))}",
                 parse_mode="HTML",
@@ -908,12 +880,6 @@ class TelegramMediaBot:
             await query.edit_message_text("Radarr root folder is not configured.")
             return
 
-        # await query.edit_message_text(
-        #     f"Adding to Radarr...\n"
-        #     f"<b>{escape(str(title))} ({escape(str(year))})</b>",
-        #     parse_mode="HTML",
-        # )
-
         added = await self.radarr.lookup_and_add_movie(
             imdb_id=imdb_id,
             title=title,
@@ -926,7 +892,7 @@ class TelegramMediaBot:
         added_year = added.get("year", year)
 
         await query.edit_message_text(
-            f"✅ Added to Radarr\n"
+            f"? Added to Radarr\n"
             f'<a href="{escape(str(imdb_url))}"><b>{escape(str(added_title))} ({escape(str(added_year))})</b>\n</a>',
             parse_mode="HTML",
         )
@@ -957,22 +923,7 @@ class TelegramMediaBot:
             "all": "all seasons",
         }.get(season_mode, season_mode)
 
-        # await query.edit_message_text(
-        #     f"Looking up TVDB ID...\n"
-        #     f"<b>{escape(str(title))} ({escape(str(year))})</b>\n"
-        #     f"Seasons: {escape(str(season_label))}",
-        #     parse_mode="HTML",
-        # )
-
         tvdb_id = await self.tvdb_lookup.get_tvdb_id_from_imdb_id(imdb_id)
-
-        # await query.edit_message_text(
-        #     f"Adding to Sonarr...\n"
-        #     f"<b>{escape(str(title))} ({escape(str(year))})</b>\n"
-        #     f"Seasons: {escape(str(season_label))}\n"
-        #     f"TVDB ID: {escape(str(tvdb_id or 'unknown'))}",
-        #     parse_mode="HTML",
-        # )
 
         added = await self.sonarr.lookup_and_add_series(
             title=title,
@@ -995,7 +946,7 @@ class TelegramMediaBot:
                 seasons_text = season_label
 
             await query.edit_message_text(
-                f"✅ Updated existing Sonarr show\n"
+                f"? Updated existing Sonarr show\n"
                 f'<a href="{escape(str(imdb_url))}"><b>{escape(str(added_title))} ({escape(str(added_year))})</b>\n</a>'
                 f"Seasons: {escape(str(seasons_text))}\n",
                 parse_mode="HTML",
@@ -1003,7 +954,7 @@ class TelegramMediaBot:
             return
 
         await query.edit_message_text(
-            f"✅ Added to Sonarr\n"
+            f"? Added to Sonarr\n"
             f'<a href="{escape(str(imdb_url))}"><b>{escape(str(added_title))} ({escape(str(added_year))})</b>\n</a>'
             f"Seasons: {escape(str(season_label))}\n",
             parse_mode="HTML",

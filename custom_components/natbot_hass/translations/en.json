@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Telegram Media Bot",
+        "title": "Natbot",
         "description": "Enter your Telegram bot and OMDb settings.",
         "data": {
           "bot_token": "Telegram bot token",
@@ -30,7 +30,7 @@
       },
       "sonarr_connection": {
         "title": "Sonarr",
-        "description": "Enter Sonarr connection details. Leave empty to skip TV support.",
+        "description": "Enter Sonarr connection details. Leave empty to skip TV shows support.",
         "data": {
           "sonarr_url": "Sonarr URL",
           "sonarr_api_key": "Sonarr API key"
@@ -52,18 +52,18 @@
       "unknown": "Unexpected error."
     },
     "abort": {
-      "already_configured": "Telegram Media Bot is already configured."
+      "already_configured": "Natbot is already configured."
     }
   },
     "options": {
     "step": {
       "init": {
-        "title": "Telegram Media Bot options",
+        "title": "Natbot options",
         "description": "Update Telegram, OMDb, and search mode settings.",
         "data": {
           "bot_token": "Telegram bot token",
           "omdb_api_key": "OMDb API key",
-          "allowed_chat_ids": "Allowed chat IDs",
+          "allowed_chat_ids": "Allowed chat IDs. Leave empty to allow all.",
           "search_mode": "Search mode",
           "search_command": "Search command"
         }

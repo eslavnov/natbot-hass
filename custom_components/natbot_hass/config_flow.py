@@ -152,7 +152,7 @@ class TelegramMediaBotConfigFlow(
     config_entries.ConfigFlow,
     domain=DOMAIN,
 ):
-    """Handle a config flow for Telegram Media Bot."""
+    """Handle a config flow for Natbot."""
 
     VERSION = 1
 
@@ -333,7 +333,7 @@ class TelegramMediaBotConfigFlow(
                 self._data[CONF_SONARR_ROOT_FOLDER] = ""
                 self._data[CONF_SONARR_QUALITY_PROFILE_ID] = 1
                 return self.async_create_entry(
-                    title="Telegram Media Bot",
+                    title="Natbot",
                     data=self._data,
                 )
 
@@ -396,7 +396,7 @@ class TelegramMediaBotConfigFlow(
             self._data[CONF_SONARR_ROOT_FOLDER] = user_input[CONF_SONARR_ROOT_FOLDER]
 
             return self.async_create_entry(
-                title="Telegram Media Bot",
+                title="Natbot",
                 data=self._data,
             )
 
@@ -424,7 +424,7 @@ class TelegramMediaBotConfigFlow(
         )
 
 class TelegramMediaBotOptionsFlow(config_entries.OptionsFlow):
-    """Handle options flow for Telegram Media Bot."""
+    """Handle options flow for Natbot."""
 
     def __init__(self, config_entry: ConfigEntry) -> None:
         self._config_entry = config_entry

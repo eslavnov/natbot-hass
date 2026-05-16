@@ -39,7 +39,7 @@ async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Set up Telegram Media Bot from a config entry."""
+    """Set up Natbot from a config entry."""
 
     hass.data.setdefault(DOMAIN, {})
 
@@ -131,7 +131,7 @@ async def async_unload_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Unload Telegram Media Bot."""
+    """Unload Natbot."""
 
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
