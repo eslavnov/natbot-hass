@@ -16,7 +16,7 @@ Bot look. Bot find. Bot poke Radarr or Sonarr.
   <a href="https://youtube.com/shorts/Ezo6LBKHqrg">
     <img 
       src="https://img.youtube.com/vi/Ezo6LBKHqrg/0.jpg" 
-      alt="Limited by the technology of my time" 
+      alt="Bot demo" 
     >
   </a>
 
@@ -42,6 +42,8 @@ Bot look. Bot find. Bot poke Radarr or Sonarr.
 1. Go here: Settings → Devices & services → Add integration
 2. Search: Natbot
 3. Fill boxes. Do not anger boxes!
+
+![Demo](assets/demo.gif)
 
 ## Use
 
