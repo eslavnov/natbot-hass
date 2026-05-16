@@ -39,7 +39,7 @@ Bot look. Bot find. Bot poke Radarr or Sonarr.
 7. Install
 
 ## Config
-1. Go here: Settings → Devices & services → Add integration
+1. Go here: Settings => Devices & services => Add integration
 2. Search: Natbot
 3. Fill boxes. Do not anger boxes!
 
@@ -55,7 +55,7 @@ Bot look. Bot find. Bot poke Radarr or Sonarr.
 
 ## Change stuff
 
-Go here: Settings → Devices & services → Telegram Media Bot → Configure
+Go here: Settings => Devices & services => Natbot => Configure
 
 Change things. Bot forget old brain. Bot get new brain.
 
