@@ -411,13 +411,6 @@ class TelegramMediaBot:
                 imdb_id=imdb_id,
             )
 
-            await self.async_handle_download_request(
-                query=query,
-                chat_id=chat_id,
-                result=result,
-                imdb_id=imdb_id,
-            )
-
         elif data.startswith("season:"):
             season_mode = data.removeprefix("season:")
 
