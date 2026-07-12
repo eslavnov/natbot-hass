@@ -2,7 +2,7 @@ DOMAIN = "natbot_hass"
 
 CONF_BOT_TOKEN = "bot_token"
 CONF_ALLOWED_CHAT_IDS = "allowed_chat_ids"
-CONF_OMDB_API_KEY = "omdb_api_key"
+CONF_TMDB_API_KEY = "tmdb_api_key"
 
 DATA_BOT = "bot"
 

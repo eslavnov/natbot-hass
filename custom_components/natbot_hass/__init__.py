@@ -10,7 +10,7 @@ from .bot import TelegramMediaBot
 from .const import (
     CONF_ALLOWED_CHAT_IDS,
     CONF_BOT_TOKEN,
-    CONF_OMDB_API_KEY,
+    CONF_TMDB_API_KEY,
     CONF_RADARR_API_KEY,
     CONF_RADARR_QUALITY_PROFILE_ID,
     CONF_RADARR_ROOT_FOLDER,
@@ -44,7 +44,11 @@ async def async_setup_entry(
     hass.data.setdefault(DOMAIN, {})
 
     token = _get_entry_value(entry, CONF_BOT_TOKEN, "")
-    omdb_api_key = _get_entry_value(entry, CONF_OMDB_API_KEY, "")
+    tmdb_api_key = _get_entry_value(
+        entry,
+        CONF_TMDB_API_KEY,
+        _get_entry_value(entry, CONF_OMDB_API_KEY, ""),
+    )
 
     allowed_chat_ids_raw = _get_entry_value(entry, CONF_ALLOWED_CHAT_IDS, "")
     allowed_chat_ids = {
@@ -57,7 +61,7 @@ async def async_setup_entry(
         hass=hass,
         token=_get_entry_value(entry, CONF_BOT_TOKEN, ""),
         allowed_chat_ids=allowed_chat_ids,
-        omdb_api_key=_get_entry_value(entry, CONF_OMDB_API_KEY, ""),
+        tmdb_api_key=tmdb_api_key,
         search_mode=_get_entry_value(entry, CONF_SEARCH_MODE, SEARCH_MODE_SIMPLE),
         search_command=_get_entry_value(entry, CONF_SEARCH_COMMAND, DEFAULT_SEARCH_COMMAND),
         radarr_url=_get_entry_value(entry, CONF_RADARR_URL, ""),

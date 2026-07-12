@@ -25,7 +25,6 @@ Bot look. Bot find. Bot poke Radarr or Sonarr.
 - Home Assistant
 - HACS
 - [Telegram bot token](https://www.home-assistant.io/integrations/telegram_bot/#create-a-bot-in-telegram)
-- [OMDb API key](https://www.omdbapi.com/apikey.aspx)
 - Radarr, for movie pile and/or Sonarr, for TV pile
 
 ## Install

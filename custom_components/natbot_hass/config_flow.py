@@ -15,7 +15,7 @@ from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig
 from .const import (
     CONF_ALLOWED_CHAT_IDS,
     CONF_BOT_TOKEN,
-    CONF_OMDB_API_KEY,
+    CONF_TMDB_API_KEY,
     CONF_RADARR_API_KEY,
     CONF_RADARR_QUALITY_PROFILE_ID,
     CONF_RADARR_ROOT_FOLDER,
@@ -174,7 +174,7 @@ class TelegramMediaBotConfigFlow(
         return TelegramMediaBotOptionsFlow(config_entry)
         
     async def async_step_user(self, user_input=None):
-        """Step 1: Telegram and OMDb settings."""
+        """Step 1: Telegram and TMDb settings."""
 
         errors = {}
 
@@ -196,7 +196,7 @@ class TelegramMediaBotConfigFlow(
         schema = vol.Schema(
             {
                 vol.Required(CONF_BOT_TOKEN): str,
-                vol.Required(CONF_OMDB_API_KEY): str,
+                vol.Required(CONF_TMDB_API_KEY): str,
                 vol.Optional(CONF_ALLOWED_CHAT_IDS, default=""): str,
 
                 vol.Required(CONF_SEARCH_MODE, default=SEARCH_MODE_SIMPLE): vol.In(
@@ -441,7 +441,7 @@ class TelegramMediaBotOptionsFlow(config_entries.OptionsFlow):
         self._sonarr_root_folders: list[dict[str, Any]] = []
 
     async def async_step_init(self, user_input=None):
-        """Step 1: Telegram, OMDb, and search mode."""
+        """Step 1: Telegram, TMDb, and search mode."""
 
         errors = {}
 
@@ -468,8 +468,8 @@ class TelegramMediaBotOptionsFlow(config_entries.OptionsFlow):
                     default=self._data.get(CONF_BOT_TOKEN, ""),
                 ): str,
                 vol.Required(
-                    CONF_OMDB_API_KEY,
-                    default=self._data.get(CONF_OMDB_API_KEY, ""),
+                    CONF_TMDB_API_KEY,
+                    default=self._data.get(CONF_TMDB_API_KEY, ""),
                 ): str,
                 vol.Optional(
                     CONF_ALLOWED_CHAT_IDS,
