@@ -43,6 +43,15 @@
           "sonarr_quality_profile_id": "Sonarr quality profile",
           "sonarr_root_folder": "Sonarr root folder"
         }
+      },
+      "qbittorrent": {
+        "title": "qBittorrent",
+        "description": "Configure torrent-file downloads. Leave empty to disable this feature.",
+        "data": {
+          "qbittorrent_url": "qBittorrent URL",
+          "qbittorrent_username": "qBittorrent username",
+          "qbittorrent_password": "qBittorrent password"
+        }
       }
     },
     "error": {
@@ -98,6 +107,15 @@
         "data": {
           "sonarr_quality_profile_id": "Sonarr quality profile",
           "sonarr_root_folder": "Sonarr root folder"
+        }
+      },
+      "qbittorrent": {
+        "title": "qBittorrent",
+        "description": "Configure torrent-file downloads. Leave empty to disable this feature.",
+        "data": {
+          "qbittorrent_url": "qBittorrent URL",
+          "qbittorrent_username": "qBittorrent username",
+          "qbittorrent_password": "qBittorrent password"
         }
       }
     },

@@ -29,11 +29,19 @@ from .const import (
     SEARCH_MODE_SIMPLE,
 )
 
+from .qbittorrent import QBittorrentClient, QBittorrentError
+
 _LOGGER = logging.getLogger(__name__)
 
 TMDB_PAGE_SIZE = 20
 TMDB_API_URL = "https://api.themoviedb.org/3"
 TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/w500"
+
+TORRENT_CATEGORIES = {
+    "movies": "Movies",
+    "tv": "TV Shows",
+    "games": "Games",
+}
 
 def _build_application(token: str) -> Application:
     """Build Telegram application outside Home Assistant's event loop."""
@@ -57,6 +65,9 @@ class TelegramMediaBot:
         sonarr_api_key: str = "",
         sonarr_root_folder: str = "",
         sonarr_quality_profile_id: int = 1,
+        qbittorrent_url: str = "",
+        qbittorrent_username: str = "",
+        qbittorrent_password: str = "",
     ) -> None:
         self.hass = hass
         self.token = token
@@ -83,6 +94,15 @@ class TelegramMediaBot:
             api_key=sonarr_api_key,
         )
 
+        self.qbittorrent = QBittorrentClient(
+            hass=hass,
+            base_url=qbittorrent_url,
+            username=qbittorrent_username,
+            password=qbittorrent_password,
+        )
+
+        self.pending_torrents: dict[int, dict[str, Any]] = {}
+
         self.tvdb_lookup = TvdbLookupClient(hass)
 
         self.application: Application | None = None
@@ -108,6 +128,13 @@ class TelegramMediaBot:
         self.application = await self.hass.async_add_executor_job(
             _build_application,
             self.token,
+        )
+
+        self.application.add_handler(
+            MessageHandler(
+                filters.Document.FileExtension("torrent"),
+                self._handle_torrent_file,
+            )
         )
 
         self.application.add_handler(CommandHandler("start", self._handle_start))
@@ -246,6 +273,98 @@ class TelegramMediaBot:
             query_text=query_text,
         )
 
+    async def _handle_torrent_file(
+        self,
+        update: Update,
+        context: ContextTypes.DEFAULT_TYPE,
+    ) -> None:
+        """Receive a torrent file and ask for its qBittorrent category."""
+
+        if update.message is None or update.effective_chat is None:
+            return
+
+        chat_id = update.effective_chat.id
+
+        if not self._is_allowed(chat_id):
+            await update.message.reply_text("Not allowed.")
+            return
+
+        if not self.qbittorrent.configured:
+            await update.message.reply_text(
+                "qBittorrent is not configured."
+            )
+            return
+
+        document = update.message.document
+
+        if document is None:
+            return
+
+        filename = document.file_name or "upload.torrent"
+
+        if not filename.lower().endswith(".torrent"):
+            await update.message.reply_text(
+                "Please send a .torrent file."
+            )
+            return
+
+        # Telegram Bot API downloads are limited to 20 MB.
+        if document.file_size and document.file_size > 20 * 1024 * 1024:
+            await update.message.reply_text(
+                "The torrent file is too large."
+            )
+            return
+
+        try:
+            telegram_file = await context.bot.get_file(document.file_id)
+            torrent_data = await telegram_file.download_as_bytearray()
+
+        except Exception as err:
+            _LOGGER.exception(
+                "Could not download Telegram torrent file: %s",
+                err,
+            )
+            await update.message.reply_text(
+                "❌ Could not download the torrent file from Telegram."
+            )
+            return
+
+        self.pending_torrents[chat_id] = {
+            "filename": filename,
+            "content": bytes(torrent_data),
+        }
+
+        keyboard = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Movies",
+                        callback_data="torrent_category:movies",
+                    ),
+                    InlineKeyboardButton(
+                        "TV Shows",
+                        callback_data="torrent_category:tv",
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        "Games",
+                        callback_data="torrent_category:games",
+                    ),
+                    InlineKeyboardButton(
+                        "Cancel",
+                        callback_data="torrent_category:cancel",
+                    ),
+                ],
+            ]
+        )
+
+        await update.message.reply_text(
+            f"Where should I put <b>{escape(filename)}</b>?",
+            reply_markup=keyboard,
+            parse_mode="HTML",
+        )
+
     async def _handle_message(
         self,
         update: Update,
@@ -361,6 +480,15 @@ class TelegramMediaBot:
 
         await query.answer()
 
+        if data.startswith("torrent_category:"):
+            await self.async_handle_torrent_category(
+                query=query,
+                chat_id=chat_id,
+                data=data,
+            )
+            self.async_schedule_sensor_update()
+            return
+            
         session = self.search_sessions.get(chat_id)
 
         if session is None:
@@ -538,6 +666,87 @@ class TelegramMediaBot:
 
         await self.async_edit_current_result(query)
 
+    async def async_handle_torrent_category(
+        self,
+        *,
+        query,
+        chat_id: int,
+        data: str,
+    ) -> None:
+        """Handle qBittorrent category selection."""
+
+        category_key = data.removeprefix("torrent_category:")
+
+        if category_key == "cancel":
+            self.pending_torrents.pop(chat_id, None)
+            await query.edit_message_text("Torrent upload cancelled.")
+            return
+
+        category = TORRENT_CATEGORIES.get(category_key)
+
+        if category is None:
+            await query.edit_message_text(
+                "Unknown torrent category."
+            )
+            return
+
+        pending = self.pending_torrents.get(chat_id)
+
+        if pending is None:
+            await query.edit_message_text(
+                "Torrent upload expired. Please send the file again."
+            )
+            return
+
+        filename = str(pending["filename"])
+        content = pending["content"]
+
+        await query.edit_message_text(
+            f"Adding <b>{escape(filename)}</b> to "
+            f"<b>{escape(category)}</b>…",
+            parse_mode="HTML",
+        )
+
+        try:
+            await self.qbittorrent.async_add_torrent(
+                content=content,
+                filename=filename,
+                category=category,
+            )
+
+        except QBittorrentError as err:
+            _LOGGER.exception(
+                "Could not add torrent to qBittorrent: %s",
+                err,
+            )
+
+            await query.edit_message_text(
+                "❌ Could not add torrent\n\n"
+                f"{escape(str(err))}",
+                parse_mode="HTML",
+            )
+            return
+
+        except Exception as err:
+            _LOGGER.exception(
+                "Unexpected qBittorrent error: %s",
+                err,
+            )
+
+            await query.edit_message_text(
+                "❌ Unexpected error while adding torrent."
+            )
+            return
+
+        finally:
+            self.pending_torrents.pop(chat_id, None)
+
+        await query.edit_message_text(
+            f"✅ Added <b>{escape(filename)}</b>\n"
+            f"Category: <b>{escape(category)}</b>",
+            parse_mode="HTML",
+        )
+        
     async def async_search_movies_page(
         self,
         title: str,
