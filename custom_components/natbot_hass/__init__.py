@@ -47,7 +47,7 @@ async def async_setup_entry(
     tmdb_api_key = _get_entry_value(
         entry,
         CONF_TMDB_API_KEY,
-        _get_entry_value(entry, CONF_OMDB_API_KEY, ""),
+        _get_entry_value(entry, CONF_TMDB_API_KEY, ""),
     )
 
     allowed_chat_ids_raw = _get_entry_value(entry, CONF_ALLOWED_CHAT_IDS, "")

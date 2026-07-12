@@ -3,10 +3,10 @@
     "step": {
       "user": {
         "title": "Natbot",
-        "description": "Enter your Telegram bot and OMDb settings.",
+        "description": "Enter your Telegram bot and TMDb settings.",
         "data": {
           "bot_token": "Telegram bot token",
-          "omdb_api_key": "OMDb API key",
+          "TMDb_api_key": "TMDb API key",
           "allowed_chat_ids": "Allowed chat IDs",
           "search_mode": "Search mode",
           "search_command": "Search command"
@@ -59,10 +59,10 @@
     "step": {
       "init": {
         "title": "Natbot options",
-        "description": "Update Telegram, OMDb, and search mode settings.",
+        "description": "Update Telegram, TMDb, and search mode settings.",
         "data": {
           "bot_token": "Telegram bot token",
-          "omdb_api_key": "OMDb API key",
+          "TMDb_api_key": "TMDb API key",
           "allowed_chat_ids": "Allowed chat IDs. Leave empty to allow all.",
           "search_mode": "Search mode",
           "search_command": "Search command"
