@@ -783,52 +783,52 @@ class TelegramMediaBotOptionsFlow(config_entries.OptionsFlow):
             errors=errors,
         )
 
-    async def async_step_qbittorrent(self, user_input=None):
-        """Step 6: qBittorrent settings."""
+async def async_step_qbittorrent(self, user_input=None):
+    """Step 6: qBittorrent settings."""
 
-        errors = {}
+    errors = {}
 
-        if user_input is not None:
-            qbittorrent_url = user_input.get(
+    if user_input is not None:
+        qbittorrent_url = user_input.get(
+            CONF_QBITTORRENT_URL,
+            "",
+        ).strip()
+        qbittorrent_username = user_input.get(
+            CONF_QBITTORRENT_USERNAME,
+            "",
+        ).strip()
+        qbittorrent_password = user_input.get(
+            CONF_QBITTORRENT_PASSWORD,
+            "",
+        )
+
+        self._data[CONF_QBITTORRENT_URL] = qbittorrent_url
+        self._data[CONF_QBITTORRENT_USERNAME] = qbittorrent_username
+        self._data[CONF_QBITTORRENT_PASSWORD] = qbittorrent_password
+
+        return self.async_create_entry(
+            title="",
+            data=self._data,
+        )
+
+    schema = vol.Schema(
+        {
+            vol.Optional(
                 CONF_QBITTORRENT_URL,
-                "",
-            ).strip()
-            qbittorrent_username = user_input.get(
-                CONF_QBITTORRENT_USERNAME,
-                "",
-            ).strip()
-            qbittorrent_password = user_input.get(
-                CONF_QBITTORRENT_PASSWORD,
-                "",
-            )
-
-            self._data[CONF_QBITTORRENT_URL] = qbittorrent_url
-            self._data[CONF_QBITTORRENT_USERNAME] = qbittorrent_username
-            self._data[CONF_QBITTORRENT_PASSWORD] = qbittorrent_password
-
-            return self.async_create_entry(
-                title="",
-                data=self._data,
-            )
-
-        schema = vol.Schema(
-            {
-                vol.Optional(
+                default=self._data.get(
                     CONF_QBITTORRENT_URL,
-                    default=self._data.get(
-                        CONF_QBITTORRENT_URL,
-                        "",
-                    ),
-                ): str,
-                vol.Optional(
+                    "",
+                ),
+            ): str,
+            vol.Optional(
+                CONF_QBITTORRENT_USERNAME,
+                default=self._data.get(
                     CONF_QBITTORRENT_USERNAME,
-                    default=self._data.get(
-                        CONF_QBITTORRENT_USERNAME,
-                        "",
-                    ),
-                ): str,
-                vol.Optional(
-                    CONF_QBITTORRENT_PASSWORD,
+                    "",
+                ),
+            ): str,
+            vol.Optional(
+                CONF_QBITTORRENT_PASSWORD,
                 default=self._data.get(
                     CONF_QBITTORRENT_PASSWORD,
                     "",
