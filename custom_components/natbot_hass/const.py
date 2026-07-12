@@ -27,3 +27,7 @@ SEARCH_MODE_SIMPLE = "simple"
 SEARCH_MODE_COMMAND = "command"
 
 DEFAULT_SEARCH_COMMAND = "find"
+
+CONF_QBITTORRENT_URL = "qbittorrent_url"
+CONF_QBITTORRENT_USERNAME = "qbittorrent_username"
+CONF_QBITTORRENT_PASSWORD = "qbittorrent_password"

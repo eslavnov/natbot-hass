@@ -26,6 +26,9 @@ from .const import (
     CONF_SONARR_URL,
     CONF_SEARCH_MODE,
     CONF_SEARCH_COMMAND,
+    CONF_QBITTORRENT_URL,
+    CONF_QBITTORRENT_USERNAME,
+    CONF_QBITTORRENT_PASSWORD,
     SEARCH_MODE_SIMPLE,
     SEARCH_MODE_COMMAND,
     DEFAULT_SEARCH_COMMAND,
@@ -332,10 +335,7 @@ class TelegramMediaBotConfigFlow(
             if not sonarr_url or not sonarr_api_key:
                 self._data[CONF_SONARR_ROOT_FOLDER] = ""
                 self._data[CONF_SONARR_QUALITY_PROFILE_ID] = 1
-                return self.async_create_entry(
-                    title="Natbot",
-                    data=self._data,
-                )
+                return await self.async_step_qbittorrent()
 
             try:
                 self._sonarr_profiles = await _fetch_quality_profiles(
@@ -395,10 +395,7 @@ class TelegramMediaBotConfigFlow(
             )
             self._data[CONF_SONARR_ROOT_FOLDER] = user_input[CONF_SONARR_ROOT_FOLDER]
 
-            return self.async_create_entry(
-                title="Natbot",
-                data=self._data,
-            )
+            return await self.async_step_qbittorrent()
 
         schema = vol.Schema(
             {
@@ -421,6 +418,64 @@ class TelegramMediaBotConfigFlow(
             step_id="sonarr_options",
             data_schema=schema,
             errors=errors,
+        )
+
+    async def async_step_qbittorrent(self, user_input=None):
+        """Step 6: qBittorrent settings."""
+
+        errors = {}
+
+        if user_input is not None:
+            qbittorrent_url = user_input.get(
+                CONF_QBITTORRENT_URL,
+                "",
+            ).strip()
+            qbittorrent_username = user_input.get(
+                CONF_QBITTORRENT_USERNAME,
+                "",
+            ).strip()
+            qbittorrent_password = user_input.get(
+                CONF_QBITTORRENT_PASSWORD,
+                "",
+            )
+
+            self._data[CONF_QBITTORRENT_URL] = qbittorrent_url
+            self._data[CONF_QBITTORRENT_USERNAME] = qbittorrent_username
+            self._data[CONF_QBITTORRENT_PASSWORD] = qbittorrent_password
+
+            return self.async_create_entry(
+                title="Natbot",
+                data=self._data,
+            )
+
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_QBITTORRENT_URL,
+                    default="",
+                ): str,
+                vol.Optional(
+                    CONF_QBITTORRENT_USERNAME,
+                    default="",
+                ): str,
+                vol.Optional(
+                    CONF_QBITTORRENT_PASSWORD,
+                    default="",
+                ): str,
+            }
+        )
+
+        return self.async_show_form(
+            step_id="qbittorrent",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={
+                "hint": (
+                    "Leave all fields empty to disable torrent-file support. "
+                    "Create the Movies, TV Shows, and Games categories "
+                    "in qBittorrent first."
+                ),
+            },
         )
 
 class TelegramMediaBotOptionsFlow(config_entries.OptionsFlow):
@@ -629,10 +684,7 @@ class TelegramMediaBotOptionsFlow(config_entries.OptionsFlow):
             if not sonarr_url or not sonarr_api_key:
                 self._data[CONF_SONARR_ROOT_FOLDER] = ""
                 self._data[CONF_SONARR_QUALITY_PROFILE_ID] = 1
-                return self.async_create_entry(
-                    title="",
-                    data=self._data,
-                )
+                return await self.async_step_qbittorrent()
 
             try:
                 self._sonarr_profiles = await _fetch_quality_profiles(
@@ -695,10 +747,7 @@ class TelegramMediaBotOptionsFlow(config_entries.OptionsFlow):
             )
             self._data[CONF_SONARR_ROOT_FOLDER] = user_input[CONF_SONARR_ROOT_FOLDER]
 
-            return self.async_create_entry(
-                title="",
-                data=self._data,
-            )
+            return await self.async_step_qbittorrent()
 
         current_profile = str(
             self._data.get(CONF_SONARR_QUALITY_PROFILE_ID, "1")
@@ -733,3 +782,70 @@ class TelegramMediaBotOptionsFlow(config_entries.OptionsFlow):
             data_schema=schema,
             errors=errors,
         )
+
+    async def async_step_qbittorrent(self, user_input=None):
+        """Step 6: qBittorrent settings."""
+
+        errors = {}
+
+        if user_input is not None:
+            qbittorrent_url = user_input.get(
+                CONF_QBITTORRENT_URL,
+                "",
+            ).strip()
+            qbittorrent_username = user_input.get(
+                CONF_QBITTORRENT_USERNAME,
+                "",
+            ).strip()
+            qbittorrent_password = user_input.get(
+                CONF_QBITTORRENT_PASSWORD,
+                "",
+            )
+
+            self._data[CONF_QBITTORRENT_URL] = qbittorrent_url
+            self._data[CONF_QBITTORRENT_USERNAME] = qbittorrent_username
+            self._data[CONF_QBITTORRENT_PASSWORD] = qbittorrent_password
+
+            return self.async_create_entry(
+                title="",
+                data=self._data,
+            )
+
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_QBITTORRENT_URL,
+                    default=self._data.get(
+                        CONF_QBITTORRENT_URL,
+                        "",
+                    ),
+                ): str,
+                vol.Optional(
+                    CONF_QBITTORRENT_USERNAME,
+                    default=self._data.get(
+                        CONF_QBITTORRENT_USERNAME,
+                        "",
+                    ),
+                ): str,
+                vol.Optional(
+                    CONF_QBITTORRENT_PASSWORD,
+                default=self._data.get(
+                    CONF_QBITTORRENT_PASSWORD,
+                    "",
+                ),
+            ): str,
+        }
+    )
+
+    return self.async_show_form(
+        step_id="qbittorrent",
+        data_schema=schema,
+        errors=errors,
+        description_placeholders={
+            "hint": (
+                "Leave all fields empty to disable torrent-file support. "
+                "Create the Movies, TV Shows, and Games categories "
+                "in qBittorrent first."
+            ),
+        },
+    )

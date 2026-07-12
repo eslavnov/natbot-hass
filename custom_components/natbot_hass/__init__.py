@@ -21,6 +21,9 @@ from .const import (
     CONF_SONARR_URL,
     CONF_SEARCH_MODE,
     CONF_SEARCH_COMMAND,
+    CONF_QBITTORRENT_URL,
+    CONF_QBITTORRENT_USERNAME,
+    CONF_QBITTORRENT_PASSWORD,
     SEARCH_MODE_SIMPLE,
     DEFAULT_SEARCH_COMMAND,
     DATA_BOT,
@@ -75,6 +78,21 @@ async def async_setup_entry(
         sonarr_root_folder=_get_entry_value(entry, CONF_SONARR_ROOT_FOLDER, ""),
         sonarr_quality_profile_id=int(
             _get_entry_value(entry, CONF_SONARR_QUALITY_PROFILE_ID, 1)
+        ),
+        qbittorrent_url=_get_entry_value(
+            entry,
+            CONF_QBITTORRENT_URL,
+            "",
+        ),
+        qbittorrent_username=_get_entry_value(
+            entry,
+            CONF_QBITTORRENT_USERNAME,
+            "",
+        ),
+        qbittorrent_password=_get_entry_value(
+            entry,
+            CONF_QBITTORRENT_PASSWORD,
+            "",
         ),
     )
 
