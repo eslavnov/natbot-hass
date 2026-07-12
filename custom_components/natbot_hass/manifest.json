@@ -7,5 +7,5 @@
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "requirements": ["python-telegram-bot==21.11.1"],
-  "version": "0.1.1"
+  "version": "0.2.0"
 }
