@@ -31,7 +31,9 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-OMDB_PAGE_SIZE = 10
+TMDB_PAGE_SIZE = 20
+TMDB_API_URL = "https://api.themoviedb.org/3"
+TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/w500"
 
 def _build_application(token: str) -> Application:
     """Build Telegram application outside Home Assistant's event loop."""
@@ -44,7 +46,7 @@ class TelegramMediaBot:
         hass: HomeAssistant,
         token: str,
         allowed_chat_ids: set[int],
-        omdb_api_key: str,
+        tmdb_api_key: str,
         search_mode: str = SEARCH_MODE_SIMPLE,
         search_command: str = "find",
         radarr_url: str = "",
@@ -59,7 +61,7 @@ class TelegramMediaBot:
         self.hass = hass
         self.token = token
         self.allowed_chat_ids = allowed_chat_ids
-        self.omdb_api_key = omdb_api_key
+        self.tmdb_api_key = tmdb_api_key
         self.search_mode = search_mode
 
         self.search_command = search_command.strip().lstrip("/") or "find"
@@ -394,8 +396,20 @@ class TelegramMediaBot:
             await self.async_edit_current_result(query)
 
         elif data.startswith("download:"):
-            imdb_id = data.removeprefix("download:")
             result = results[index]
+
+            if result.get("_details") is None:
+                details = await self.async_get_movie_details(result)
+                result["_details"] = details or {}
+
+            imdb_id = result.get("imdbID", "")
+
+            await self.async_handle_download_request(
+                query=query,
+                chat_id=chat_id,
+                result=result,
+                imdb_id=imdb_id,
+            )
 
             await self.async_handle_download_request(
                 query=query,
@@ -489,7 +503,10 @@ class TelegramMediaBot:
 
         existing_results = session.get("results", [])
         existing_ids = {
-            item.get("imdbID")
+            (
+                item.get("tmdb_media_type"),
+                item.get("tmdb_id"),
+            )
             for item in existing_results
             if isinstance(item, dict)
         }
@@ -497,7 +514,11 @@ class TelegramMediaBot:
         unique_new_results = [
             item
             for item in new_results
-            if item.get("imdbID") not in existing_ids
+            if (
+                item.get("tmdb_media_type"),
+                item.get("tmdb_id"),
+            )
+            not in existing_ids
         ]
 
         if not unique_new_results:
@@ -529,17 +550,19 @@ class TelegramMediaBot:
         title: str,
         page: int = 1,
     ) -> dict[str, Any]:
-        """Search one OMDb result page."""
+        """Search one TMDB movie/TV result page."""
 
         session = async_get_clientsession(self.hass)
 
         try:
             async with session.get(
-                "https://www.omdbapi.com/",
+                f"{TMDB_API_URL}/search/multi",
                 params={
-                    "apikey": self.omdb_api_key,
-                    "s": title,
+                    "api_key": self.tmdb_api_key,
+                    "query": title,
                     "page": page,
+                    "include_adult": "false",
+                    "language": "en-US",
                 },
                 timeout=ClientTimeout(total=10),
             ) as response:
@@ -547,7 +570,7 @@ class TelegramMediaBot:
                 data = await response.json()
 
         except TimeoutError:
-            _LOGGER.exception("OMDb request timed out for query: %s", title)
+            _LOGGER.exception("TMDB request timed out for query: %s", title)
             return {
                 "results": [],
                 "total_results": 0,
@@ -555,27 +578,10 @@ class TelegramMediaBot:
             }
 
         except ClientError as err:
-            _LOGGER.exception("OMDb request failed for query %s: %s", title, err)
-            return {
-                "results": [],
-                "total_results": 0,
-                "has_more": False,
-            }
-
-        except Exception as err:
-            _LOGGER.exception("Unexpected OMDb error for query %s: %s", title, err)
-            return {
-                "results": [],
-                "total_results": 0,
-                "has_more": False,
-            }
-
-        if data.get("Response") != "True":
-            _LOGGER.warning(
-                "OMDb returned no results for %s page %s: %s",
+            _LOGGER.exception(
+                "TMDB request failed for query %s: %s",
                 title,
-                page,
-                data.get("Error"),
+                err,
             )
             return {
                 "results": [],
@@ -583,7 +589,19 @@ class TelegramMediaBot:
                 "has_more": False,
             }
 
-        raw_results = data.get("Search", [])
+        except Exception as err:
+            _LOGGER.exception(
+                "Unexpected TMDB error for query %s: %s",
+                title,
+                err,
+            )
+            return {
+                "results": [],
+                "total_results": 0,
+                "has_more": False,
+            }
+
+        raw_results = data.get("results", [])
 
         if not isinstance(raw_results, list):
             return {
@@ -598,41 +616,86 @@ class TelegramMediaBot:
             if not isinstance(item, dict):
                 continue
 
-            imdb_id = item.get("imdbID")
-            if not imdb_id:
+            media_type = item.get("media_type")
+
+            # /search/multi also returns people.
+            if media_type not in {"movie", "tv"}:
                 continue
 
-            cleaned_results.append(item)
+            tmdb_id = item.get("id")
+            if tmdb_id is None:
+                continue
+
+            if media_type == "movie":
+                title_value = item.get("title") or item.get("original_title")
+                date_value = item.get("release_date") or ""
+                normalized_type = "movie"
+            else:
+                title_value = item.get("name") or item.get("original_name")
+                date_value = item.get("first_air_date") or ""
+                normalized_type = "series"
+
+            if not title_value:
+                continue
+
+            year = date_value[:4] if len(date_value) >= 4 else "N/A"
+
+            cleaned_results.append(
+                {
+                    # Existing internal fields retained for minimal disruption.
+                    "Title": title_value,
+                    "Year": year,
+                    "Type": normalized_type,
+
+                    # IMDb ID is populated when details are loaded.
+                    "imdbID": "",
+
+                    # TMDB-specific fields.
+                    "tmdb_id": int(tmdb_id),
+                    "tmdb_media_type": media_type,
+                    "Poster": (
+                        f"{TMDB_IMAGE_URL}{item['poster_path']}"
+                        if item.get("poster_path")
+                        else "N/A"
+                    ),
+                    "_tmdb_search_result": item,
+                }
+            )
 
         try:
-            total_results = int(data.get("totalResults", len(cleaned_results)))
+            total_results = int(data.get("total_results", len(cleaned_results)))
+            total_pages = int(data.get("total_pages", page))
         except (TypeError, ValueError):
             total_results = len(cleaned_results)
-
-        loaded_count_after_this_page = page * OMDB_PAGE_SIZE
-        has_more = loaded_count_after_this_page < total_results
+            total_pages = page
 
         return {
             "results": cleaned_results,
             "total_results": total_results,
-            "has_more": has_more,
+            "has_more": page < total_pages,
         }
 
-    async def async_get_movie_details(self, imdb_id: str) -> dict[str, Any] | None:
-        """Fetch full movie/series details from OMDb by IMDb ID."""
+    async def async_get_movie_details(
+        self,
+        result: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Fetch TMDB details and external IDs for a movie or TV show."""
 
-        if not imdb_id:
+        tmdb_id = result.get("tmdb_id")
+        tmdb_media_type = result.get("tmdb_media_type")
+
+        if not tmdb_id or tmdb_media_type not in {"movie", "tv"}:
             return None
 
         session = async_get_clientsession(self.hass)
 
         try:
             async with session.get(
-                "https://www.omdbapi.com/",
+                f"{TMDB_API_URL}/{tmdb_media_type}/{tmdb_id}",
                 params={
-                    "apikey": self.omdb_api_key,
-                    "i": imdb_id,
-                    "plot": "short",
+                    "api_key": self.tmdb_api_key,
+                    "language": "en-US",
+                    "append_to_response": "external_ids",
                 },
                 timeout=ClientTimeout(total=10),
             ) as response:
@@ -640,34 +703,68 @@ class TelegramMediaBot:
                 data = await response.json()
 
         except TimeoutError:
-            _LOGGER.exception("OMDb details request timed out for IMDb ID: %s", imdb_id)
+            _LOGGER.exception(
+                "TMDB details request timed out for %s ID %s",
+                tmdb_media_type,
+                tmdb_id,
+            )
             return None
 
         except ClientError as err:
             _LOGGER.exception(
-                "OMDb details request failed for IMDb ID %s: %s",
-                imdb_id,
+                "TMDB details request failed for %s ID %s: %s",
+                tmdb_media_type,
+                tmdb_id,
                 err,
             )
             return None
 
         except Exception as err:
             _LOGGER.exception(
-                "Unexpected OMDb details error for IMDb ID %s: %s",
-                imdb_id,
+                "Unexpected TMDB details error for %s ID %s: %s",
+                tmdb_media_type,
+                tmdb_id,
                 err,
             )
             return None
 
-        if data.get("Response") != "True":
-            _LOGGER.warning(
-                "OMDb returned no details for %s: %s",
-                imdb_id,
-                data.get("Error"),
-            )
-            return None
+        external_ids = data.get("external_ids") or {}
+        imdb_id = external_ids.get("imdb_id") or ""
+        tvdb_id = external_ids.get("tvdb_id")
 
-        return data
+        genres = data.get("genres") or []
+        genre_names = [
+            genre.get("name")
+            for genre in genres
+            if isinstance(genre, dict) and genre.get("name")
+        ]
+
+        if tmdb_media_type == "movie":
+            runtime = data.get("runtime")
+        else:
+            runtimes = data.get("episode_run_time") or []
+            runtime = runtimes[0] if runtimes else None
+
+        vote_average = data.get("vote_average")
+        rating = (
+            f"{float(vote_average):.1f}"
+            if isinstance(vote_average, (int, float))
+            else "N/A"
+        )
+
+        # Save IDs directly on the search result.
+        result["imdbID"] = imdb_id
+        result["tvdb_id"] = tvdb_id
+
+        return {
+            "Plot": data.get("overview") or "N/A",
+            "Genre": ", ".join(genre_names) if genre_names else "N/A",
+            "imdbRating": rating,
+            "Runtime": f"{runtime} min" if runtime else "N/A",
+            "imdbID": imdb_id,
+            "tvdbID": tvdb_id,
+            "tmdbID": tmdb_id,
+        }
 
     async def async_send_current_result(
         self,
@@ -736,9 +833,11 @@ class TelegramMediaBot:
 
         details = result.get("_details")
 
-        if details is None and imdb_id:
-            details = await self.async_get_movie_details(imdb_id)
+        if details is None:
+            details = await self.async_get_movie_details(result)
             result["_details"] = details or {}
+
+        imdb_id = result.get("imdbID", "")
 
         plot = None
         genre = None
@@ -767,11 +866,12 @@ class TelegramMediaBot:
             ],
         ]
 
-        keyboard_rows.append(
-            [
-                InlineKeyboardButton("Download", callback_data=f"download:{imdb_id}"),
-            ]
-        )
+        keyboard_rows.append([
+            InlineKeyboardButton(
+                "Download",
+                callback_data=f"download:{result.get('tmdb_media_type')}:{result.get('tmdb_id')}",
+            )
+        ])
 
         keyboard = InlineKeyboardMarkup(keyboard_rows)
 
@@ -905,6 +1005,7 @@ class TelegramMediaBot:
         year: str | int | None,
         imdb_id: str,
         imdb_url: str,
+        tvdb_id: int | None,
         season_mode: str,
     ) -> None:
         """Add or update series in Sonarr."""
@@ -923,8 +1024,9 @@ class TelegramMediaBot:
             "all": "all seasons",
         }.get(season_mode, season_mode)
 
-        tvdb_id = await self.tvdb_lookup.get_tvdb_id_from_imdb_id(imdb_id)
-
+        if not tvdb_id: 
+            tvdb_id = await self.tvdb_lookup.get_tvdb_id_from_imdb_id(imdb_id)
+        
         added = await self.sonarr.lookup_and_add_series(
             title=title,
             year=year,
@@ -1010,6 +1112,7 @@ class TelegramMediaBot:
         title = result.get("Title", "Unknown title")
         year = result.get("Year", "")
         media_type = result.get("Type", "unknown")
+        tvdb_id = result.get("tvdb_id")
 
         if media_type != "series":
             await query.edit_message_text("This option is only available for TV shows.")
@@ -1021,6 +1124,7 @@ class TelegramMediaBot:
             year=year,
             imdb_id=imdb_id,
             imdb_url=imdb_url,
+            tvdb_id=tvdb_id,
             season_mode=season_mode,
         )
     
